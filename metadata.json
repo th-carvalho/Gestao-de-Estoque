@@ -1,0 +1,6 @@
+{
+  "name": "Controle de Estoque e Vendas",
+  "description": "Sistema simples de controle de estoque, clientes, registro de vendas e emissão de notas e relatórios para produtos de cabelo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
