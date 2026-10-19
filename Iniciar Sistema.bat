@@ -6,6 +6,6 @@ if not exist "dist" (
   "C:\Program Files\nodejs\node.exe" "C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js" run build
 )
 
+start "Servidor" "C:\Program Files\nodejs\node.exe" server/index.js
+timeout /t 4 /nobreak >nul
 start "" "http://localhost:3001"
-timeout /t 2 /nobreak >nul
-"C:\Program Files\nodejs\node.exe" server/index.js
