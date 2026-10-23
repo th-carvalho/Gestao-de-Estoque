@@ -4,7 +4,7 @@
 
 O **Sistema de Gestão de Vendas de Produtos de Beleza** é um projeto acadêmico desenvolvido no curso de Sistemas de Informação, com o objetivo de facilitar a administração das vendas de produtos de beleza comercializados para salões.
 
-A proposta surgiu da necessidade de melhorar a organização das informações comerciais, reduzindo a dependência de planilhas, anotações e controles manuais. O sistema busca centralizar dados de clientes, vendedores, produtos, vendas, estoque, pagamentos e comissões em uma única plataforma web.
+A proposta surgiu da necessidade de melhorar a organização das informações comerciais, reduzindo a dependência de planilhas, anotações e controles manuais. O sistema centraliza dados de clientes, produtos, estoque e vendas em uma única aplicação web, com relatórios e emissão de comprovantes.
 
 A solução é direcionada principalmente a uma profissional autônoma responsável por todas as etapas do processo comercial, desde o contato com os clientes até o acompanhamento financeiro das vendas.
 
@@ -16,55 +16,208 @@ Desenvolver um sistema web para centralizar e facilitar o gerenciamento das oper
 
 ### Objetivos específicos
 
-- Cadastrar e gerenciar clientes, vendedores e produtos.
+- Cadastrar e gerenciar clientes e produtos.
 - Registrar e acompanhar as vendas realizadas para os salões de beleza.
 - Controlar a disponibilidade e a movimentação do estoque.
-- Acompanhar pagamentos e identificar pendências financeiras.
-- Automatizar o cálculo de comissões dos vendedores.
+- Acompanhar os recebimentos por forma de pagamento.
 - Disponibilizar informações que auxiliem na análise dos resultados e na tomada de decisões.
 
-## ⚙️ Funcionalidades previstas
+## ⚙️ Funcionalidades
 
-### 👥 Gestão de clientes e vendedores
-- Cadastro e gerenciamento de clientes.
-- Organização dos salões de beleza atendidos.
-- Cadastro e gerenciamento de vendedores.
-- Associação das vendas aos respectivos vendedores e clientes.
+### ✅ Implementadas
 
-### 🛍️ Gestão de produtos e estoque
-- Cadastro e gerenciamento de produtos de beleza.
-- Consulta das informações dos produtos.
-- Controle da quantidade disponível em estoque.
-- Atualização automática do estoque após o registro de uma venda.
+#### 🛒 Nova venda (PDV)
+- Busca de produtos e montagem do carrinho, com ajuste de quantidades.
+- Seleção de cliente existente ou cadastro rápido durante a venda.
+- Aplicação de desconto e observações.
+- Formas de pagamento: Pix, cartão de crédito, cartão de débito e dinheiro.
+- Baixa automática do estoque ao concluir a venda (feita em transação no banco).
 
-### 💰 Gestão de vendas e pagamentos
-- Registro e acompanhamento das vendas.
-- Associação de cada venda ao salão de beleza responsável pela compra.
-- Controle dos pagamentos recebidos e pendentes.
-- Organização das informações financeiras das operações comerciais.
+#### 🧾 Comprovante de venda
+- Comprovante gerado ao final de cada venda, com dados da loja e chave Pix.
+- Impressão do comprovante.
+- Cópia do comprovante em texto formatado para envio pelo WhatsApp.
 
-### 📊 Controle de comissões e relatórios
+#### 🛍️ Estoque e produtos
+- Cadastro, edição e exclusão de produtos (nome, marca, categoria, preço de custo, preço de venda, estoque e estoque mínimo).
+- Filtro por categoria e por produtos com estoque baixo.
+- Entrada de estoque (reposição), com atualização opcional do preço de custo.
+- Alerta de estoque baixo na barra de navegação.
+
+#### 👥 Clientes
+- Cadastro, edição e exclusão de clientes (nome, telefone, e-mail e observações).
+- Histórico de compras por cliente.
+- Atalho para iniciar uma nova venda a partir do cadastro do cliente.
+
+#### 📄 Histórico de vendas
+- Listagem de todas as vendas registradas.
+- Reabertura do comprovante de qualquer venda.
+- Cancelamento de venda com devolução automática dos itens ao estoque.
+
+#### 📊 Relatórios
+- Filtro por período: hoje, últimos 7 dias, mês atual ou todo o período.
+- Faturamento, custo, lucro, margem de lucro, quantidade de vendas e ticket médio.
+- Ranking dos produtos mais vendidos.
+- Alerta de reposição de estoque.
+- Recebimentos por forma de pagamento.
+
+### 🔜 Previstas
+
+- Cadastro e gerenciamento de vendedores, com associação às vendas.
 - Cálculo automatizado das comissões por produto.
-- Consulta das informações relacionadas às vendas.
-- Visualização dos resultados comerciais.
-- Disponibilização de informações para apoiar a gestão administrativa.
+- Controle de pagamentos pendentes (vendas a prazo).
+- Tela de configurações da loja na interface (hoje os dados ficam na tabela `configuracoes`).
+- Automações de processos (n8n ou Python).
 
 ## 🛠️ Tecnologias utilizadas
 
-As tecnologias previstas para o desenvolvimento do projeto são:
+### Front-end
 
 | Tecnologia | Finalidade |
 |---|---|
-| HTML5 | Estrutura das páginas web |
-| CSS3 | Estilização e apresentação da interface |
-| JavaScript | Interatividade e integração com a API |
-| Bootstrap 5.3 | Desenvolvimento da interface responsiva |
-| Node.js | Desenvolvimento do back-end |
-| Express | Criação das rotas e da API |
-| PostgreSQL | Armazenamento e gerenciamento dos dados |
-| n8n ou Python | Implementação de automações |
+| React 19 | Construção da interface em componentes |
+| TypeScript | Tipagem estática do código do front-end |
+| Vite 6 | Servidor de desenvolvimento e build |
+| Tailwind CSS 4 | Estilização e layout responsivo |
+| Motion | Animações de transição entre telas e modais |
+| Lucide React | Ícones |
+
+### Back-end
+
+| Tecnologia | Finalidade |
+|---|---|
+| Node.js | Ambiente de execução do servidor |
+| Express 4 | API REST e entrega do front-end compilado |
+| MySQL | Armazenamento dos dados |
+| mysql2 | Conexão com o MySQL (pool de conexões e transações) |
+| dotenv | Leitura das variáveis de ambiente |
+| cors | Liberação de acesso do front-end à API em desenvolvimento |
+
+### Ferramentas
+
+| Tecnologia | Finalidade |
+|---|---|
 | Git e GitHub | Controle de versão e colaboração |
 | Visual Studio Code | Ambiente de desenvolvimento |
+
+## 📁 Estrutura do projeto
+
+```
+gerenciadorEstoque/
+├── database/
+│   └── schema.sql            # Criação do banco e das tabelas
+├── server/
+│   ├── db.js                 # Pool de conexão com o MySQL
+│   └── index.js              # API Express e entrega do front-end (dist/)
+├── src/
+│   ├── components/           # Telas e modais (Nova Venda, Produtos, Clientes, etc.)
+│   ├── data/
+│   │   ├── api.ts            # Cliente da API (conversão entre front-end e banco)
+│   │   └── initialData.ts    # Configurações padrão da loja
+│   ├── App.tsx               # Componente principal e estado da aplicação
+│   ├── main.tsx              # Ponto de entrada do React
+│   └── types.ts              # Tipos (Produto, Cliente, Venda, etc.)
+├── Iniciar Sistema.bat       # Inicializa o sistema no Windows
+├── Iniciar Sistema.vbs       # Atalho para executar o .bat sem abrir terminal
+├── index.html
+├── package.json
+└── vite.config.ts
+```
+
+## 🗄️ Banco de dados
+
+O script [database/schema.sql](database/schema.sql) cria o banco `estoque_db` com as tabelas:
+
+| Tabela | Conteúdo |
+|---|---|
+| `produtos` | Produtos, preços de custo e venda, estoque atual e estoque mínimo |
+| `clientes` | Clientes (salões) e seus contatos |
+| `vendas` | Cabeçalho das vendas: cliente, subtotal, desconto, total, custo e forma de pagamento |
+| `itens_venda` | Itens de cada venda, com preço e custo no momento da venda |
+| `configuracoes` | Dados da loja exibidos no comprovante (nome, proprietária, telefone, endereço, chave Pix) |
+
+## 🔌 API
+
+O servidor roda por padrão em `http://localhost:3001`.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/api/produtos` | Lista os produtos |
+| POST | `/api/produtos` | Cadastra um produto |
+| PUT | `/api/produtos/:id` | Atualiza um produto |
+| DELETE | `/api/produtos/:id` | Exclui um produto |
+| GET | `/api/clientes` | Lista os clientes |
+| POST | `/api/clientes` | Cadastra um cliente |
+| PUT | `/api/clientes/:id` | Atualiza um cliente |
+| DELETE | `/api/clientes/:id` | Exclui um cliente |
+| GET | `/api/vendas` | Lista as vendas com seus itens |
+| POST | `/api/vendas` | Registra uma venda e dá baixa no estoque |
+| DELETE | `/api/vendas/:id` | Cancela uma venda e devolve os itens ao estoque |
+| GET | `/api/configuracoes` | Retorna os dados da loja |
+| PUT | `/api/configuracoes` | Atualiza os dados da loja |
+
+## 🚀 Como executar
+
+### Pré-requisitos
+
+- [Node.js](https://nodejs.org/) 18 ou superior
+- [MySQL](https://www.mysql.com/) 8 ou superior
+
+### 1. Instalar as dependências
+
+```bash
+npm install
+```
+
+### 2. Criar o banco de dados
+
+```bash
+mysql -u root -p < database/schema.sql
+```
+
+### 3. Configurar a conexão (opcional)
+
+Por padrão o servidor conecta em `localhost` com o usuário `root`, sem senha, no banco `estoque_db`. Para usar outros valores, crie um arquivo `.env` na raiz do projeto:
+
+```env
+DB_HOST=localhost
+DB_USER=root
+DB_PASS=sua_senha
+DB_NAME=estoque_db
+PORT=3001
+```
+
+> ⚠️ Nunca suba o arquivo `.env` para o repositório. Ele já está no `.gitignore`.
+
+### 4. Executar
+
+**Modo de uso (produção):** compila o front-end e inicia o servidor, que entrega a aplicação e a API no mesmo endereço.
+
+```bash
+npm start
+```
+
+Acesse `http://localhost:3001`.
+
+**Modo de desenvolvimento:** rode a API e o Vite em terminais separados.
+
+```bash
+npm run server   # API em http://localhost:3001
+npm run dev      # Interface em http://localhost:3000
+```
+
+**Atalho no Windows:** dê um duplo clique no arquivo `Iniciar Sistema.vbs` na raiz do projeto. Ele compila o front-end na primeira execução, inicia o servidor e abre o navegador automaticamente.
+
+### Scripts disponíveis
+
+| Script | Descrição |
+|---|---|
+| `npm run dev` | Inicia o front-end com Vite na porta 3000 |
+| `npm run server` | Inicia a API Express na porta 3001 |
+| `npm run build` | Gera a versão de produção do front-end em `dist/` |
+| `npm start` | Executa o build e inicia o servidor |
+| `npm run preview` | Pré-visualiza o build do Vite |
+| `npm run lint` | Verifica os tipos com o TypeScript |
 
 ## 🏗️ Desenvolvimento do projeto
 
@@ -72,9 +225,9 @@ O desenvolvimento está organizado nas seguintes etapas:
 
 1. **Análise de requisitos:** levantamento das necessidades da profissional e identificação dos problemas existentes no processo comercial.
 2. **Modelagem do banco de dados:** definição da estrutura e dos relacionamentos entre as informações.
-3. **Desenvolvimento do back-end:** implementação das regras de negócio e da API utilizando Node.js e Express.
-4. **Desenvolvimento do front-end:** criação das interfaces com HTML, CSS, Bootstrap e JavaScript.
-5. **Integração e automação:** conexão entre a interface, a API e o banco de dados, incluindo a atualização do estoque e o cálculo de comissões.
+3. **Desenvolvimento do back-end:** implementação das regras de negócio e da API utilizando Node.js, Express e MySQL.
+4. **Desenvolvimento do front-end:** criação das interfaces com React, TypeScript e Tailwind CSS.
+5. **Integração e automação:** conexão entre a interface, a API e o banco de dados, incluindo a atualização automática do estoque.
 6. **Testes e validação:** verificação das funcionalidades, da precisão dos dados e da facilidade de utilização.
 7. **Documentação e apresentação:** registro das decisões técnicas e apresentação dos resultados do projeto.
 
@@ -98,9 +251,9 @@ Espera-se que o sistema contribua para:
 
 - Centralizar as informações comerciais em uma única plataforma.
 - Reduzir erros e inconsistências nos registros.
-- Facilitar o acompanhamento das vendas e dos pagamentos pendentes.
+- Facilitar o acompanhamento das vendas e dos recebimentos.
 - Melhorar a precisão do controle de estoque.
-- Automatizar tarefas repetitivas relacionadas às comissões.
+- Automatizar tarefas repetitivas, como a baixa de estoque e, futuramente, o cálculo de comissões.
 - Tornar a rotina administrativa mais organizada.
 - Apoiar a tomada de decisões com base nas informações registradas.
 
@@ -125,6 +278,8 @@ Projeto Integrador desenvolvido no âmbito do Desafio UNIFACISA, na área de Tec
 
 - SOMMERVILLE, Ian. *Engenharia de Software*. Referência para os princípios de desenvolvimento e teste de software.
 - NODE.JS. *Documentação oficial*. Disponível em: https://nodejs.org/
+- REACT. *Documentação oficial*. Disponível em: https://react.dev/
+- MYSQL. *Documentação oficial*. Disponível em: https://dev.mysql.com/doc/
 - CHIAVENATO, Idalberto. Referência para conceitos de gestão, planejamento, organização e controle.
 - TOTVS. Conteúdos sobre gestão integrada e centralização de informações empresariais.
 
