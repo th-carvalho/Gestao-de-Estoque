@@ -23,6 +23,8 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, settings, onCl
         return 'Cartão de Débito';
       case 'cartao_credito':
         return 'Cartão de Crédito';
+      case 'prazo':
+        return 'A Prazo';
       default:
         return 'Outro';
     }

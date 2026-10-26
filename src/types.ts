@@ -1,6 +1,6 @@
 export type TabType = 'produtos' | 'clientes' | 'nova_venda' | 'vendas' | 'relatorios';
 
-export type PaymentMethod = 'pix' | 'dinheiro' | 'cartao_debito' | 'cartao_credito' | 'outro';
+export type PaymentMethod = 'pix' | 'dinheiro' | 'cartao_debito' | 'cartao_credito' | 'prazo' | 'outro';
 
 export interface Product {
   id: string;

@@ -15,6 +15,7 @@ import {
   DollarSign,
   UserPlus,
   X,
+  Clock,
 } from 'lucide-react';
 import { Product, Client, Sale, SaleItem, PaymentMethod } from '../types';
 import { formatCurrency } from '../data/initialData';
@@ -446,6 +447,7 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
                 { id: 'cartao_credito', label: 'Crédito', icon: CreditCard },
                 { id: 'cartao_debito', label: 'Débito', icon: CreditCard },
                 { id: 'dinheiro', label: 'Dinheiro', icon: Banknote },
+                { id: 'prazo', label: 'A Prazo', icon: Clock },
               ].map((m) => {
                 const Icon = m.icon;
                 const isSelected = paymentMethod === m.id;

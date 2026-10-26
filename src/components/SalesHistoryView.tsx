@@ -73,6 +73,8 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
         return 'bg-indigo-50 text-indigo-800 border-indigo-200';
       case 'dinheiro':
         return 'bg-amber-50 text-amber-800 border-amber-200';
+      case 'prazo':
+        return 'bg-orange-50 text-orange-800 border-orange-200';
       default:
         return 'bg-neutral-100 text-neutral-800 border-neutral-200';
     }
@@ -88,6 +90,8 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
         return 'Cartão Débito';
       case 'dinheiro':
         return 'Dinheiro';
+      case 'prazo':
+        return 'A Prazo';
       default:
         return 'Outro';
     }
