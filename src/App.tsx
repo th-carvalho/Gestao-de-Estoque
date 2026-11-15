@@ -18,7 +18,7 @@ import {
 } from './data/api';
 
 export default function App() {
-  const [logado, setLogado] = useState(() => sessionStorage.getItem('logado') === '1');
+  const [logado, setLogado] = useState(false);
   const [currentTab, setCurrentTab] = useState<TabType>('nova_venda');
   const [products, setProducts] = useState<Product[]>([]);
   const [clients, setClients] = useState<Client[]>([]);

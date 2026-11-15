@@ -22,7 +22,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
 
     setTimeout(() => {
       if (email === MOCK_EMAIL && password === MOCK_PASSWORD) {
-        sessionStorage.setItem('logado', '1');
         onLogin();
       } else {
         setError('E-mail ou senha incorretos.');
