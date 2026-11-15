@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { LoginView } from './components/LoginView';
 import { Navbar } from './components/Navbar';
 import { ProductsView } from './components/ProductsView';
 import { ClientsView } from './components/ClientsView';
@@ -17,6 +18,7 @@ import {
 } from './data/api';
 
 export default function App() {
+  const [logado, setLogado] = useState(() => sessionStorage.getItem('logado') === '1');
   const [currentTab, setCurrentTab] = useState<TabType>('nova_venda');
   const [products, setProducts] = useState<Product[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -138,6 +140,10 @@ export default function App() {
   };
 
   const lowStockCount = products.filter((p) => p.stock <= p.minStock).length;
+
+  if (!logado) {
+    return <LoginView onLogin={() => setLogado(true)} />;
+  }
 
   return (
     <div className="min-h-screen bg-neutral-100 flex flex-col font-sans">

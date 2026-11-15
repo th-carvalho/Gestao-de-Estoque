@@ -1,2 +1,5 @@
+Set fso = CreateObject("Scripting.FileSystemObject")
 Set shell = CreateObject("WScript.Shell")
-shell.Run "cmd /c ""C:\Users\Thiago\Desktop\thiago\gerenciadorEstoque\Iniciar Sistema.bat""", 1, False
+Dim scriptDir
+scriptDir = fso.GetParentFolderName(WScript.ScriptFullName)
+shell.Run "cmd /c """ & scriptDir & "\Iniciar Sistema.bat""", 1, False

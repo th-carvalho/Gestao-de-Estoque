@@ -44,6 +44,8 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
     preselectedClientId || ''
   );
   const [customClientName, setCustomClientName] = useState('Consumidor Final (Balcão)');
+  const [clientSearchTerm, setClientSearchTerm] = useState('');
+  const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   const [discount, setDiscount] = useState<string>('0');
   const [saleNotes, setSaleNotes] = useState('');
@@ -60,6 +62,25 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
     });
     return Array.from(set);
   }, [products]);
+
+  const selectedClient = clients.find((c) => c.id === selectedClientId);
+
+  const filteredClients = useMemo(() => {
+    if (!clientSearchTerm.trim()) return clients;
+    const term = clientSearchTerm.toLowerCase();
+    return clients.filter((c) => c.name.toLowerCase().includes(term));
+  }, [clients, clientSearchTerm]);
+
+  const handleSelectClient = (client: Client | null) => {
+    if (client) {
+      setSelectedClientId(client.id);
+    } else {
+      setSelectedClientId('');
+      setCustomClientName('Consumidor Final (Balcão)');
+    }
+    setClientSearchTerm('');
+    setIsClientDropdownOpen(false);
+  };
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -355,24 +376,63 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
               </button>
             </div>
 
-            <select
-              id="select-client-for-sale"
-              value={selectedClientId}
-              onChange={(e) => {
-                setSelectedClientId(e.target.value);
-                if (!e.target.value) {
-                  setCustomClientName('Consumidor Final (Balcão)');
-                }
-              }}
-              className="w-full text-xs sm:text-sm py-2 px-3 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-400"
-            >
-              <option value="">Consumidor Final (Balcão)</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} {c.phone ? `(${c.phone})` : ''}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <div className="relative">
+                <input
+                  id="select-client-for-sale"
+                  type="text"
+                  placeholder="Consumidor Final (Balcão)"
+                  value={
+                    isClientDropdownOpen
+                      ? clientSearchTerm
+                      : selectedClient
+                      ? `${selectedClient.name}${selectedClient.phone ? ` (${selectedClient.phone})` : ''}`
+                      : ''
+                  }
+                  onFocus={() => {
+                    setIsClientDropdownOpen(true);
+                    setClientSearchTerm('');
+                  }}
+                  onChange={(e) => setClientSearchTerm(e.target.value)}
+                  className="w-full text-xs sm:text-sm py-2 pl-3 pr-9 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-400"
+                />
+                <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+              </div>
+
+              {isClientDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsClientDropdownOpen(false)}
+                  />
+                  <div className="absolute z-20 mt-1 w-full max-h-52 overflow-y-auto bg-white border border-neutral-200 rounded-lg shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectClient(null)}
+                      className="w-full text-left px-3 py-2 text-xs sm:text-sm text-neutral-700 hover:bg-neutral-50 border-b border-neutral-100"
+                    >
+                      Consumidor Final (Balcão)
+                    </button>
+                    {filteredClients.length === 0 ? (
+                      <div className="px-3 py-2 text-xs text-neutral-400">
+                        Nenhum cliente encontrado.
+                      </div>
+                    ) : (
+                      filteredClients.map((c) => (
+                        <button
+                          type="button"
+                          key={c.id}
+                          onClick={() => handleSelectClient(c)}
+                          className="w-full text-left px-3 py-2 text-xs sm:text-sm text-neutral-700 hover:bg-neutral-50"
+                        >
+                          {c.name} {c.phone ? `(${c.phone})` : ''}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Cart Items List */}

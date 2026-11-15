@@ -78,12 +78,13 @@ app.get('/api/vendas', async (req, res) => {
 
 app.post('/api/vendas', async (req, res) => {
   const { id, numero_venda, cliente_id, nome_cliente, subtotal, desconto, total, custo_total, forma_pagamento, notas, data_venda, items } = req.body;
+  const dataFormatada = new Date(data_venda).toISOString().slice(0, 19).replace('T', ' ');
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
     await conn.query(
       'INSERT INTO vendas (id, numero_venda, cliente_id, nome_cliente, subtotal, desconto, total, custo_total, forma_pagamento, notas, data_venda) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-      [id, numero_venda, cliente_id || null, nome_cliente, subtotal, desconto, total, custo_total, forma_pagamento, notas, data_venda]
+      [id, numero_venda, cliente_id || null, nome_cliente, subtotal, desconto, total, custo_total, forma_pagamento, notas, dataFormatada]
     );
     for (const item of items) {
       await conn.query(
@@ -96,7 +97,8 @@ app.post('/api/vendas', async (req, res) => {
     res.status(201).json({ id });
   } catch (err) {
     await conn.rollback();
-    throw err;
+    console.error('Erro ao salvar venda:', err);
+    res.status(500).json({ error: err.message });
   } finally {
     conn.release();
   }
@@ -116,7 +118,8 @@ app.delete('/api/vendas/:id', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     await conn.rollback();
-    throw err;
+    console.error('Erro ao cancelar venda:', err);
+    res.status(500).json({ error: err.message });
   } finally {
     conn.release();
   }
@@ -153,6 +156,12 @@ if (existsSync(distPath)) {
     }
   });
 }
+
+// ── TRATAMENTO GLOBAL DE ERROS ────────────────────────────
+app.use((err, req, res, next) => {
+  console.error('Erro não tratado:', err);
+  res.status(500).json({ error: err.message });
+});
 
 // ── START ─────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
