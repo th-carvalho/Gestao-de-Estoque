@@ -16,12 +16,14 @@ interface SalesHistoryViewProps {
   sales: Sale[];
   onViewReceipt: (sale: Sale) => void;
   onCancelSale: (saleId: string) => void;
+  onMarkAsPaid: (saleId: string) => void;
 }
 
 export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
   sales,
   onViewReceipt,
   onCancelSale,
+  onMarkAsPaid,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | '7days' | 'month'>('all');
@@ -62,6 +64,9 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
   }, [sales, searchTerm, dateFilter]);
 
   const totalPeriodRevenue = filteredSales.reduce((acc, s) => acc + s.total, 0);
+  const totalPendente = filteredSales
+    .filter((s) => s.paymentStatus === 'pendente')
+    .reduce((acc, s) => acc + s.total, 0);
 
   const getPaymentBadge = (method: string) => {
     switch (method) {
@@ -110,11 +115,22 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
           </p>
         </div>
 
-        <div className="bg-white px-4 py-2 rounded-xl border border-neutral-200 self-start sm:self-auto">
-          <span className="text-xs text-neutral-500 block">Total do período filtrado</span>
-          <span className="text-lg font-bold text-neutral-900">
-            {formatCurrency(totalPeriodRevenue)}
-          </span>
+        <div className="flex gap-3">
+          <div className="bg-white px-4 py-2 rounded-xl border border-neutral-200 self-start sm:self-auto">
+            <span className="text-xs text-neutral-500 block">Total do período filtrado</span>
+            <span className="text-lg font-bold text-neutral-900">
+              {formatCurrency(totalPeriodRevenue)}
+            </span>
+          </div>
+
+          {totalPendente > 0 && (
+            <div className="bg-orange-50 px-4 py-2 rounded-xl border border-orange-200 self-start sm:self-auto">
+              <span className="text-xs text-orange-700 block">Fiado pendente</span>
+              <span className="text-lg font-bold text-orange-800">
+                {formatCurrency(totalPendente)}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -176,6 +192,7 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
                   <th className="py-3 px-4">Cliente</th>
                   <th className="py-3 px-4">Itens Comprados</th>
                   <th className="py-3 px-3">Pagamento</th>
+                  <th className="py-3 px-3">Status</th>
                   <th className="py-3 px-4 text-right">Valor Total</th>
                   <th className="py-3 px-4 text-right">Ações</th>
                 </tr>
@@ -217,6 +234,27 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
                         >
                           {getPaymentName(sale.paymentMethod)}
                         </span>
+                      </td>
+
+                      <td className="py-3.5 px-3">
+                        {sale.paymentStatus === 'pendente' ? (
+                          <button
+                            onClick={() => {
+                              if (confirm(`Confirmar recebimento da venda #${sale.saleNumber}?`)) {
+                                onMarkAsPaid(sale.id);
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-100 transition-colors"
+                            title="Clique para marcar como pago"
+                          >
+                            <CheckCircle className="w-3 h-3" />
+                            Pendente
+                          </button>
+                        ) : (
+                          <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold border bg-emerald-50 text-emerald-800 border-emerald-200">
+                            Pago
+                          </span>
+                        )}
                       </td>
 
                       <td className="py-3.5 px-4 text-right font-bold text-neutral-900 whitespace-nowrap">

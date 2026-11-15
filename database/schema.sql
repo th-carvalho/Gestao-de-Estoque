@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS vendas (
   total DECIMAL(10,2) NOT NULL,
   custo_total DECIMAL(10,2) NOT NULL DEFAULT 0,
   forma_pagamento VARCHAR(30) NOT NULL,
+  status_pagamento VARCHAR(20) NOT NULL DEFAULT 'pago',
   notas TEXT,
   data_venda DATETIME NOT NULL
 );
@@ -59,3 +60,16 @@ CREATE TABLE IF NOT EXISTS configuracoes (
 );
 
 INSERT IGNORE INTO configuracoes (id, nome_loja) VALUES (1, 'Minha Loja');
+
+-- Migração: adiciona status_pagamento em bancos criados antes dessa coluna existir
+SET @coluna_existe = (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = 'estoque_db' AND TABLE_NAME = 'vendas' AND COLUMN_NAME = 'status_pagamento'
+);
+SET @sql = IF(@coluna_existe = 0,
+  'ALTER TABLE vendas ADD COLUMN status_pagamento VARCHAR(20) NOT NULL DEFAULT ''pago''',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

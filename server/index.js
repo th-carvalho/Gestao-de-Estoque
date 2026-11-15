@@ -79,12 +79,13 @@ app.get('/api/vendas', async (req, res) => {
 app.post('/api/vendas', async (req, res) => {
   const { id, numero_venda, cliente_id, nome_cliente, subtotal, desconto, total, custo_total, forma_pagamento, notas, data_venda, items } = req.body;
   const dataFormatada = new Date(data_venda).toISOString().slice(0, 19).replace('T', ' ');
+  const statusPagamento = forma_pagamento === 'prazo' ? 'pendente' : 'pago';
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
     await conn.query(
-      'INSERT INTO vendas (id, numero_venda, cliente_id, nome_cliente, subtotal, desconto, total, custo_total, forma_pagamento, notas, data_venda) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-      [id, numero_venda, cliente_id || null, nome_cliente, subtotal, desconto, total, custo_total, forma_pagamento, notas, dataFormatada]
+      'INSERT INTO vendas (id, numero_venda, cliente_id, nome_cliente, subtotal, desconto, total, custo_total, forma_pagamento, status_pagamento, notas, data_venda) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+      [id, numero_venda, cliente_id || null, nome_cliente, subtotal, desconto, total, custo_total, forma_pagamento, statusPagamento, notas, dataFormatada]
     );
     for (const item of items) {
       await conn.query(
@@ -123,6 +124,12 @@ app.delete('/api/vendas/:id', async (req, res) => {
   } finally {
     conn.release();
   }
+});
+
+app.put('/api/vendas/:id/pagamento', async (req, res) => {
+  const { status_pagamento } = req.body;
+  await db.query('UPDATE vendas SET status_pagamento=? WHERE id=?', [status_pagamento, req.params.id]);
+  res.json({ ok: true });
 });
 
 // ── CONFIGURAÇÕES ─────────────────────────────────────────

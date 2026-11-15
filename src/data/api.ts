@@ -67,6 +67,7 @@ function rowToSale(r: Record<string, unknown>): Sale {
     total: Number(r.total),
     totalCost: Number(r.custo_total),
     paymentMethod: r.forma_pagamento as Sale['paymentMethod'],
+    paymentStatus: (r.status_pagamento ?? 'pago') as Sale['paymentStatus'],
     notes: (r.notas ?? '') as string,
     items: rawItems.map((i) => ({
       productId: i.produto_id as string,
@@ -195,6 +196,14 @@ export async function apiAddSale(s: Sale): Promise<void> {
 
 export async function apiDeleteSale(id: string): Promise<void> {
   await fetch(`${BASE}/vendas/${id}`, { method: 'DELETE' });
+}
+
+export async function apiUpdatePaymentStatus(id: string, status: Sale['paymentStatus']): Promise<void> {
+  await fetch(`${BASE}/vendas/${id}/pagamento`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status_pagamento: status }),
+  });
 }
 
 // ── CONFIGURAÇÕES ─────────────────────────────────────────

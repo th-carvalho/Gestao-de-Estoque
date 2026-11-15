@@ -196,6 +196,7 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
       total: finalTotal,
       totalCost,
       paymentMethod,
+      paymentStatus: paymentMethod === 'prazo' ? 'pendente' : 'pago',
       notes: saleNotes.trim() || undefined,
     });
 

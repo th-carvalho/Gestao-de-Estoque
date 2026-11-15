@@ -13,7 +13,7 @@ import { INITIAL_SETTINGS } from './data/initialData';
 import {
   apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct,
   apiGetClients, apiAddClient, apiUpdateClient, apiDeleteClient,
-  apiGetSales, apiAddSale, apiDeleteSale,
+  apiGetSales, apiAddSale, apiDeleteSale, apiUpdatePaymentStatus,
   apiGetSettings, apiSaveSettings,
 } from './data/api';
 
@@ -139,6 +139,13 @@ export default function App() {
     setSales((prev) => prev.filter((s) => s.id !== saleId));
   };
 
+  const handleMarkAsPaid = async (saleId: string) => {
+    await apiUpdatePaymentStatus(saleId, 'pago');
+    setSales((prev) =>
+      prev.map((s) => (s.id === saleId ? { ...s, paymentStatus: 'pago' } : s))
+    );
+  };
+
   const lowStockCount = products.filter((p) => p.stock <= p.minStock).length;
 
   if (!logado) {
@@ -196,6 +203,7 @@ export default function App() {
                 sales={sales}
                 onViewReceipt={(sale) => setActiveReceiptSale(sale)}
                 onCancelSale={handleCancelSale}
+                onMarkAsPaid={handleMarkAsPaid}
               />
             )}
             {currentTab === 'relatorios' && (

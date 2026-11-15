@@ -1,6 +1,7 @@
 export type TabType = 'produtos' | 'clientes' | 'nova_venda' | 'vendas' | 'relatorios';
 
 export type PaymentMethod = 'pix' | 'dinheiro' | 'cartao_debito' | 'cartao_credito' | 'prazo' | 'outro';
+export type PaymentStatus = 'pago' | 'pendente';
 
 export interface Product {
   id: string;
@@ -47,6 +48,7 @@ export interface Sale {
   total: number;
   totalCost: number;
   paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
   notes?: string;
 }
 
