@@ -13,7 +13,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { Client, Sale } from '../types';
-import { formatCurrency, formatDate } from '../data/initialData';
+import { formatCurrency, formatDate, getPaymentMethodLabel } from '../data/initialData';
 
 interface ClientsViewProps {
   clients: Client[];
@@ -462,8 +462,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     <div className="pt-2 border-t border-neutral-200 flex justify-between items-center text-xs">
                       <span className="text-neutral-500">
                         Pagamento:{' '}
-                        <span className="font-medium text-neutral-800 uppercase">
-                          {sale.paymentMethod}
+                        <span className="font-medium text-neutral-800">
+                          {getPaymentMethodLabel(sale.paymentMethod)}
                         </span>
                       </span>
                       <span className="font-bold text-sm text-neutral-900">

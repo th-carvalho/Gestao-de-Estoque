@@ -309,6 +309,23 @@ export function saveStoredSettings(settings: StoreSettings): void {
   }
 }
 
+export function getPaymentMethodLabel(method: string): string {
+  switch (method) {
+    case 'pix':
+      return 'Pix';
+    case 'cartao_credito':
+      return 'Cartão de Crédito';
+    case 'cartao_debito':
+      return 'Cartão de Débito';
+    case 'dinheiro':
+      return 'Dinheiro';
+    case 'prazo':
+      return 'A Prazo';
+    default:
+      return 'Outro';
+  }
+}
+
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
