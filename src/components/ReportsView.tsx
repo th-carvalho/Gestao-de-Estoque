@@ -93,6 +93,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sales, products }) => 
       cartao_credito: { count: 0, total: 0 },
       cartao_debito: { count: 0, total: 0 },
       dinheiro: { count: 0, total: 0 },
+      prazo: { count: 0, total: 0 },
       outro: { count: 0, total: 0 },
     };
 
@@ -354,12 +355,14 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sales, products }) => 
           </h3>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
           {[
             { key: 'pix', label: 'Pix' },
             { key: 'cartao_credito', label: 'Cartão Crédito' },
             { key: 'cartao_debito', label: 'Cartão Débito' },
             { key: 'dinheiro', label: 'Dinheiro' },
+            { key: 'prazo', label: 'A Prazo' },
+            { key: 'outro', label: 'Outro' },
           ].map((item) => {
             const data = paymentBreakdown[item.key] || { count: 0, total: 0 };
             const percent = totalRevenue > 0 ? Math.round((data.total / totalRevenue) * 100) : 0;
