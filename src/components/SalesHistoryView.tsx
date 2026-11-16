@@ -27,6 +27,7 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | '7days' | 'month'>('all');
+  const [paymentFilter, setPaymentFilter] = useState<string>('all');
 
   const filteredSales = useMemo(() => {
     const now = new Date();
@@ -48,6 +49,8 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
 
         if (!matchesSearch) return false;
 
+        if (paymentFilter !== 'all' && sale.paymentMethod !== paymentFilter) return false;
+
         const saleDate = new Date(sale.date);
         if (dateFilter === 'today') {
           return sale.date.startsWith(todayStr);
@@ -61,7 +64,7 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
         return true;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [sales, searchTerm, dateFilter]);
+  }, [sales, searchTerm, dateFilter, paymentFilter]);
 
   const totalPeriodRevenue = filteredSales.reduce((acc, s) => acc + s.total, 0);
   const totalPendente = filteredSales
@@ -168,6 +171,22 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
                 {f.label}
               </button>
             ))}
+          </div>
+
+          <div className="relative">
+            <Filter className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+            <select
+              value={paymentFilter}
+              onChange={(e) => setPaymentFilter(e.target.value)}
+              className="pl-8 pr-8 py-2 text-xs sm:text-sm bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-400 appearance-none"
+            >
+              <option value="all">Todas as formas</option>
+              <option value="pix">Pix</option>
+              <option value="cartao_credito">Cartão Crédito</option>
+              <option value="cartao_debito">Cartão Débito</option>
+              <option value="dinheiro">Dinheiro</option>
+              <option value="prazo">A Prazo</option>
+            </select>
           </div>
         </div>
       </div>
