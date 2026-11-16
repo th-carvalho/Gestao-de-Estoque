@@ -51,6 +51,16 @@ CREATE TABLE IF NOT EXISTS itens_venda (
   subtotal DECIMAL(10,2) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS vendas_parcelas (
+  id INTEGER PRIMARY KEY AUTO_INCREMENT,
+  venda_id VARCHAR(36) NOT NULL REFERENCES vendas(id),
+  numero INTEGER NOT NULL,
+  valor DECIMAL(10,2) NOT NULL,
+  vencimento DATE NOT NULL,
+  pago TINYINT(1) NOT NULL DEFAULT 0,
+  data_pagamento DATETIME NULL
+);
+
 CREATE TABLE IF NOT EXISTS configuracoes (
   id INTEGER PRIMARY KEY DEFAULT 1,
   nome_loja VARCHAR(150) NOT NULL DEFAULT 'Minha Loja',

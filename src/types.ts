@@ -26,6 +26,14 @@ export interface Client {
   createdAt: string;
 }
 
+export interface PrazoInstallment {
+  number: number;
+  amount: number;
+  dueDate: string; // YYYY-MM-DD
+  paid: boolean;
+  paidAt?: string;
+}
+
 export interface SaleItem {
   productId: string;
   productName: string;
@@ -50,6 +58,7 @@ export interface Sale {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   installments: number;
+  prazoSchedule?: PrazoInstallment[];
   notes?: string;
 }
 

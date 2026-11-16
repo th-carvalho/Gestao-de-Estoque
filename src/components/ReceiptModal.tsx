@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Printer, Copy, Check, X, Receipt } from 'lucide-react';
 import { Sale, StoreSettings } from '../types';
-import { formatCurrency, formatDate } from '../data/initialData';
+import { formatCurrency, formatDate, formatDateOnly } from '../data/initialData';
 
 interface ReceiptModalProps {
   sale: Sale;
@@ -189,6 +189,19 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, settings, onCl
             )}
             {settings.pixKey && sale.paymentMethod === 'pix' && (
               <div>Chave Pix: {settings.pixKey}</div>
+            )}
+
+            {sale.paymentMethod === 'prazo' && sale.prazoSchedule && sale.prazoSchedule.length > 0 && (
+              <>
+                <div className="my-1 whitespace-pre">{LINE}</div>
+                <div className="font-bold">DATAS COMBINADAS:</div>
+                {sale.prazoSchedule.map((p) => (
+                  <div key={p.number} className="flex justify-between">
+                    <span>{formatDateOnly(p.dueDate)}</span>
+                    <span>{formatCurrency(p.amount)}</span>
+                  </div>
+                ))}
+              </>
             )}
 
             {sale.notes && (

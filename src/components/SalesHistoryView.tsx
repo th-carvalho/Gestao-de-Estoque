@@ -7,16 +7,19 @@ import {
   Calendar,
   Filter,
   CheckCircle,
-  Eye,
+  ChevronDown,
+  ChevronUp,
+  Circle,
 } from 'lucide-react';
 import { Sale } from '../types';
-import { formatCurrency, formatDate } from '../data/initialData';
+import { formatCurrency, formatDate, formatDateOnly } from '../data/initialData';
 
 interface SalesHistoryViewProps {
   sales: Sale[];
   onViewReceipt: (sale: Sale) => void;
   onCancelSale: (saleId: string) => void;
   onMarkAsPaid: (saleId: string) => void;
+  onMarkInstallmentPaid: (saleId: string, number: number, paid: boolean) => void;
 }
 
 export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
@@ -24,10 +27,12 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
   onViewReceipt,
   onCancelSale,
   onMarkAsPaid,
+  onMarkInstallmentPaid,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | '7days' | 'month'>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
+  const [expandedSaleId, setExpandedSaleId] = useState<string | null>(null);
 
   const filteredSales = useMemo(() => {
     const now = new Date();
@@ -222,98 +227,167 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
                     .map((it) => `${it.quantity}x ${it.productName}`)
                     .join(', ');
 
+                  const hasSchedule = sale.paymentMethod === 'prazo' && (sale.prazoSchedule?.length ?? 0) > 0;
+                  const paidCount = sale.prazoSchedule?.filter((p) => p.paid).length ?? 0;
+                  const totalParcelas = sale.prazoSchedule?.length ?? 0;
+                  const isExpanded = expandedSaleId === sale.id;
+
                   return (
-                    <tr key={sale.id} className="hover:bg-neutral-50/70 transition-colors">
-                      <td className="py-3.5 px-4 font-mono font-bold text-neutral-900">
-                        #{sale.saleNumber}
-                      </td>
+                    <React.Fragment key={sale.id}>
+                      <tr className="hover:bg-neutral-50/70 transition-colors">
+                        <td className="py-3.5 px-4 font-mono font-bold text-neutral-900">
+                          #{sale.saleNumber}
+                        </td>
 
-                      <td className="py-3.5 px-3 text-neutral-600 whitespace-nowrap">
-                        {formatDate(sale.date)}
-                      </td>
+                        <td className="py-3.5 px-3 text-neutral-600 whitespace-nowrap">
+                          {formatDate(sale.date)}
+                        </td>
 
-                      <td className="py-3.5 px-4 font-medium text-neutral-900">
-                        {sale.clientName}
-                      </td>
+                        <td className="py-3.5 px-4 font-medium text-neutral-900">
+                          {sale.clientName}
+                        </td>
 
-                      <td className="py-3.5 px-4 max-w-xs">
-                        <div className="text-xs text-neutral-700 truncate" title={itemsSummary}>
-                          {itemsSummary}
-                        </div>
-                        <div className="text-[11px] text-neutral-400">
-                          {sale.items.reduce((a, b) => a + b.quantity, 0)} unidade(s)
-                        </div>
-                      </td>
+                        <td className="py-3.5 px-4 max-w-xs">
+                          <div className="text-xs text-neutral-700 truncate" title={itemsSummary}>
+                            {itemsSummary}
+                          </div>
+                          <div className="text-[11px] text-neutral-400">
+                            {sale.items.reduce((a, b) => a + b.quantity, 0)} unidade(s)
+                          </div>
+                        </td>
 
-                      <td className="py-3.5 px-3">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold border ${getPaymentBadge(
-                            sale.paymentMethod
-                          )}`}
-                        >
-                          {getPaymentName(sale.paymentMethod)}
-                          {sale.paymentMethod === 'cartao_credito' && sale.installments > 1
-                            ? ` ${sale.installments}x`
-                            : ''}
-                        </span>
-                      </td>
-
-                      <td className="py-3.5 px-3">
-                        {sale.paymentStatus === 'pendente' ? (
-                          <button
-                            onClick={() => {
-                              if (confirm(`Confirmar recebimento da venda #${sale.saleNumber}?`)) {
-                                onMarkAsPaid(sale.id);
-                              }
-                            }}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-100 transition-colors"
-                            title="Clique para marcar como pago"
+                        <td className="py-3.5 px-3">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold border ${getPaymentBadge(
+                              sale.paymentMethod
+                            )}`}
                           >
-                            <CheckCircle className="w-3 h-3" />
-                            Pendente
-                          </button>
-                        ) : (
-                          <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold border bg-emerald-50 text-emerald-800 border-emerald-200">
-                            Pago
+                            {getPaymentName(sale.paymentMethod)}
+                            {sale.paymentMethod === 'cartao_credito' && sale.installments > 1
+                              ? ` ${sale.installments}x`
+                              : ''}
                           </span>
-                        )}
-                      </td>
+                        </td>
 
-                      <td className="py-3.5 px-4 text-right font-bold text-neutral-900 whitespace-nowrap">
-                        {formatCurrency(sale.total)}
-                      </td>
+                        <td className="py-3.5 px-3">
+                          {hasSchedule ? (
+                            <button
+                              onClick={() => setExpandedSaleId(isExpanded ? null : sale.id)}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-colors ${
+                                paidCount === totalParcelas
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                                  : 'bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-100'
+                              }`}
+                              title="Ver datas de pagamento"
+                            >
+                              {paidCount}/{totalParcelas} pagas
+                              {isExpanded ? (
+                                <ChevronUp className="w-3 h-3" />
+                              ) : (
+                                <ChevronDown className="w-3 h-3" />
+                              )}
+                            </button>
+                          ) : sale.paymentStatus === 'pendente' ? (
+                            <button
+                              onClick={() => {
+                                if (confirm(`Confirmar recebimento da venda #${sale.saleNumber}?`)) {
+                                  onMarkAsPaid(sale.id);
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-100 transition-colors"
+                              title="Clique para marcar como pago"
+                            >
+                              <CheckCircle className="w-3 h-3" />
+                              Pendente
+                            </button>
+                          ) : (
+                            <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold border bg-emerald-50 text-emerald-800 border-emerald-200">
+                              Pago
+                            </span>
+                          )}
+                        </td>
 
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            id={`view-receipt-${sale.id}-btn`}
-                            onClick={() => onViewReceipt(sale)}
-                            className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors"
-                            title="Visualizar e Imprimir Recibo"
-                          >
-                            <Printer className="w-3.5 h-3.5 text-neutral-700" />
-                            <span>Nota / Recibo</span>
-                          </button>
+                        <td className="py-3.5 px-4 text-right font-bold text-neutral-900 whitespace-nowrap">
+                          {formatCurrency(sale.total)}
+                        </td>
 
-                          <button
-                            id={`cancel-sale-${sale.id}-btn`}
-                            onClick={() => {
-                              if (
-                                confirm(
-                                  `Deseja cancelar o registro da venda #${sale.saleNumber}? Os produtos retornarão ao estoque.`
-                                )
-                              ) {
-                                onCancelSale(sale.id);
-                              }
-                            }}
-                            className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
-                            title="Cancelar venda e devolver itens ao estoque"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              id={`view-receipt-${sale.id}-btn`}
+                              onClick={() => onViewReceipt(sale)}
+                              className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors"
+                              title="Visualizar e Imprimir Recibo"
+                            >
+                              <Printer className="w-3.5 h-3.5 text-neutral-700" />
+                              <span>Nota / Recibo</span>
+                            </button>
+
+                            <button
+                              id={`cancel-sale-${sale.id}-btn`}
+                              onClick={() => {
+                                if (
+                                  confirm(
+                                    `Deseja cancelar o registro da venda #${sale.saleNumber}? Os produtos retornarão ao estoque.`
+                                  )
+                                ) {
+                                  onCancelSale(sale.id);
+                                }
+                              }}
+                              className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                              title="Cancelar venda e devolver itens ao estoque"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {hasSchedule && isExpanded && (
+                        <tr className="bg-neutral-50/70">
+                          <td colSpan={8} className="px-4 py-3">
+                            <div className="text-[11px] font-semibold text-neutral-500 uppercase mb-2">
+                              Datas de pagamento combinadas
+                            </div>
+                            <div className="space-y-1.5 max-w-md">
+                              {sale.prazoSchedule!.map((p) => (
+                                <div
+                                  key={p.number}
+                                  className="flex items-center justify-between bg-white border border-neutral-200 rounded-lg px-3 py-2 text-xs"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="w-3.5 h-3.5 text-neutral-400" />
+                                    <span className="font-medium text-neutral-800">
+                                      {formatDateOnly(p.dueDate)}
+                                    </span>
+                                    <span className="text-neutral-500">
+                                      {formatCurrency(p.amount)}
+                                    </span>
+                                  </div>
+                                  <button
+                                    onClick={() =>
+                                      onMarkInstallmentPaid(sale.id, p.number, !p.paid)
+                                    }
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-colors ${
+                                      p.paid
+                                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                                        : 'bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-100'
+                                    }`}
+                                  >
+                                    {p.paid ? (
+                                      <CheckCircle className="w-3 h-3" />
+                                    ) : (
+                                      <Circle className="w-3 h-3" />
+                                    )}
+                                    {p.paid ? 'Recebido' : 'Marcar como recebido'}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>

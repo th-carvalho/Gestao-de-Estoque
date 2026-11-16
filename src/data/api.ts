@@ -56,6 +56,7 @@ function clientToRow(c: Omit<Client, 'createdAt'> & { id: string }) {
 
 function rowToSale(r: Record<string, unknown>): Sale {
   const rawItems = (r.items ?? []) as Record<string, unknown>[];
+  const rawParcelas = (r.parcelas_prazo ?? []) as Record<string, unknown>[];
   return {
     id: r.id as string,
     saleNumber: Number(r.numero_venda),
@@ -79,6 +80,15 @@ function rowToSale(r: Record<string, unknown>): Sale {
       quantity: Number(i.quantidade),
       subtotal: Number(i.subtotal),
     })),
+    prazoSchedule: rawParcelas.length > 0
+      ? rawParcelas.map((p) => ({
+          number: Number(p.numero),
+          amount: Number(p.valor),
+          dueDate: String(p.vencimento).slice(0, 10),
+          paid: Boolean(p.pago),
+          paidAt: (p.data_pagamento as string) ?? undefined,
+        }))
+      : undefined,
   };
 }
 
@@ -192,6 +202,11 @@ export async function apiAddSale(s: Sale): Promise<void> {
         quantidade: i.quantity,
         subtotal: i.subtotal,
       })),
+      parcelas_prazo: s.prazoSchedule?.map((p) => ({
+        numero: p.number,
+        valor: p.amount,
+        vencimento: p.dueDate,
+      })),
     }),
   });
 }
@@ -205,6 +220,14 @@ export async function apiUpdatePaymentStatus(id: string, status: Sale['paymentSt
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status_pagamento: status }),
+  });
+}
+
+export async function apiMarkInstallmentPaid(saleId: string, number: number, paid: boolean): Promise<void> {
+  await fetch(`${BASE}/vendas/${saleId}/parcelas/${number}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pago: paid }),
   });
 }
 

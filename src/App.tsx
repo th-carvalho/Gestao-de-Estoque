@@ -13,7 +13,7 @@ import { INITIAL_SETTINGS } from './data/initialData';
 import {
   apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct,
   apiGetClients, apiAddClient, apiUpdateClient, apiDeleteClient,
-  apiGetSales, apiAddSale, apiDeleteSale, apiUpdatePaymentStatus,
+  apiGetSales, apiAddSale, apiDeleteSale, apiUpdatePaymentStatus, apiMarkInstallmentPaid,
   apiGetSettings, apiSaveSettings,
 } from './data/api';
 
@@ -142,7 +142,33 @@ export default function App() {
   const handleMarkAsPaid = async (saleId: string) => {
     await apiUpdatePaymentStatus(saleId, 'pago');
     setSales((prev) =>
-      prev.map((s) => (s.id === saleId ? { ...s, paymentStatus: 'pago' } : s))
+      prev.map((s) =>
+        s.id === saleId
+          ? {
+              ...s,
+              paymentStatus: 'pago',
+              prazoSchedule: s.prazoSchedule?.map((p) => ({ ...p, paid: true })),
+            }
+          : s
+      )
+    );
+  };
+
+  const handleMarkInstallmentPaid = async (saleId: string, number: number, paid: boolean) => {
+    await apiMarkInstallmentPaid(saleId, number, paid);
+    setSales((prev) =>
+      prev.map((s) => {
+        if (s.id !== saleId || !s.prazoSchedule) return s;
+        const updatedSchedule = s.prazoSchedule.map((p) =>
+          p.number === number ? { ...p, paid } : p
+        );
+        const allPaid = updatedSchedule.every((p) => p.paid);
+        return {
+          ...s,
+          prazoSchedule: updatedSchedule,
+          paymentStatus: allPaid ? 'pago' : 'pendente',
+        };
+      })
     );
   };
 
@@ -204,6 +230,7 @@ export default function App() {
                 onViewReceipt={(sale) => setActiveReceiptSale(sale)}
                 onCancelSale={handleCancelSale}
                 onMarkAsPaid={handleMarkAsPaid}
+                onMarkInstallmentPaid={handleMarkInstallmentPaid}
               />
             )}
             {currentTab === 'relatorios' && (

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   Search,
@@ -16,8 +16,9 @@ import {
   UserPlus,
   X,
   Clock,
+  Calendar,
 } from 'lucide-react';
-import { Product, Client, Sale, SaleItem, PaymentMethod } from '../types';
+import { Product, Client, Sale, SaleItem, PaymentMethod, PrazoInstallment } from '../types';
 import { formatCurrency } from '../data/initialData';
 
 interface NewSaleViewProps {
@@ -48,6 +49,9 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
   const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   const [installments, setInstallments] = useState(1);
+  const [prazoParcelas, setPrazoParcelas] = useState<
+    { numero: number; valor: string; vencimento: string }[]
+  >([]);
   const [discount, setDiscount] = useState<string>('0');
   const [saleNotes, setSaleNotes] = useState('');
 
@@ -175,10 +179,74 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
   const finalTotal = Math.max(0, subtotal - discountVal);
   const estimatedProfit = finalTotal - totalCost;
 
+  // Mantém a única parcela sincronizada se o total mudar (ex: desconto alterado depois)
+  useEffect(() => {
+    if (paymentMethod === 'prazo' && prazoParcelas.length === 1) {
+      setPrazoParcelas([{ ...prazoParcelas[0], valor: finalTotal.toFixed(2) }]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finalTotal]);
+
+  const parcelasTotal = prazoParcelas.reduce((acc, p) => acc + (parseFloat(p.valor) || 0), 0);
+  const parcelasDiferenca = Math.round((finalTotal - parcelasTotal) * 100) / 100;
+
+  const defaultDueDate = (daysAhead: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + daysAhead);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const startPrazoSchedule = () => {
+    setPrazoParcelas([{ numero: 1, valor: finalTotal.toFixed(2), vencimento: defaultDueDate(30) }]);
+  };
+
+  const addParcela = () => {
+    const last = prazoParcelas[prazoParcelas.length - 1];
+    const lastDate = last ? new Date(last.vencimento) : new Date();
+    const nextDate = new Date(lastDate);
+    nextDate.setDate(nextDate.getDate() + 30);
+    setPrazoParcelas([
+      ...prazoParcelas,
+      { numero: prazoParcelas.length + 1, valor: '0.00', vencimento: nextDate.toISOString().slice(0, 10) },
+    ]);
+  };
+
+  const removeParcela = (index: number) => {
+    const updated = prazoParcelas
+      .filter((_, i) => i !== index)
+      .map((p, i) => ({ ...p, numero: i + 1 }));
+    setPrazoParcelas(updated);
+  };
+
+  const updateParcelaValor = (index: number, valor: string) => {
+    setPrazoParcelas(prazoParcelas.map((p, i) => (i === index ? { ...p, valor } : p)));
+  };
+
+  const updateParcelaData = (index: number, vencimento: string) => {
+    setPrazoParcelas(prazoParcelas.map((p, i) => (i === index ? { ...p, vencimento } : p)));
+  };
+
   const handleFinishSale = () => {
     if (cart.length === 0) {
       alert('Adicione pelo menos um produto para concluir a venda.');
       return;
+    }
+
+    if (paymentMethod === 'prazo') {
+      if (prazoParcelas.length === 0) {
+        alert('Defina ao menos uma data de pagamento para a venda a prazo.');
+        return;
+      }
+      if (prazoParcelas.some((p) => !p.vencimento)) {
+        alert('Preencha a data de vencimento de todas as parcelas.');
+        return;
+      }
+      if (Math.abs(parcelasDiferenca) > 0.01) {
+        alert(
+          `A soma das parcelas (${formatCurrency(parcelasTotal)}) precisa ser igual ao total da venda (${formatCurrency(finalTotal)}).`
+        );
+        return;
+      }
     }
 
     let clientName = customClientName;
@@ -199,10 +267,20 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
       paymentMethod,
       paymentStatus: paymentMethod === 'prazo' ? 'pendente' : 'pago',
       installments: paymentMethod === 'cartao_credito' ? installments : 1,
+      prazoSchedule:
+        paymentMethod === 'prazo'
+          ? prazoParcelas.map((p) => ({
+              number: p.numero,
+              amount: parseFloat(p.valor) || 0,
+              dueDate: p.vencimento,
+              paid: false,
+            }))
+          : undefined,
       notes: saleNotes.trim() || undefined,
     });
 
     setInstallments(1);
+    setPrazoParcelas([]);
     clearCart();
   };
 
@@ -522,6 +600,11 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
                     onClick={() => {
                       setPaymentMethod(m.id as PaymentMethod);
                       if (m.id !== 'cartao_credito') setInstallments(1);
+                      if (m.id === 'prazo') {
+                        startPrazoSchedule();
+                      } else {
+                        setPrazoParcelas([]);
+                      }
                     }}
                     className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-medium transition-colors ${
                       isSelected
@@ -552,6 +635,83 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
                     </option>
                   ))}
                 </select>
+              </div>
+            )}
+
+            {paymentMethod === 'prazo' && (
+              <div className="pt-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-neutral-600 block">
+                    Datas e valores de pagamento
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addParcela}
+                    className="text-xs font-medium text-neutral-600 hover:text-neutral-900 flex items-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Adicionar data
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {prazoParcelas.map((p, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 bg-neutral-50 border border-neutral-200 rounded-lg p-2"
+                    >
+                      <span className="text-[11px] font-semibold text-neutral-500 w-5 text-center">
+                        {p.numero}
+                      </span>
+                      <div className="relative flex-1">
+                        <Calendar className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                        <input
+                          type="date"
+                          value={p.vencimento}
+                          onChange={(e) => updateParcelaData(index, e.target.value)}
+                          className="w-full pl-7 pr-2 py-1.5 text-xs bg-white border border-neutral-200 rounded-md focus:outline-hidden focus:border-neutral-400"
+                        />
+                      </div>
+                      <div className="relative w-28">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[11px] text-neutral-400">
+                          R$
+                        </span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={p.valor}
+                          onChange={(e) => updateParcelaValor(index, e.target.value)}
+                          className="w-full pl-7 pr-2 py-1.5 text-xs bg-white border border-neutral-200 rounded-md focus:outline-hidden focus:border-neutral-400"
+                        />
+                      </div>
+                      {prazoParcelas.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeParcela(index)}
+                          className="text-neutral-400 hover:text-rose-600 p-1"
+                          title="Remover data"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div
+                  className={`flex justify-between text-[11px] px-1 ${
+                    Math.abs(parcelasDiferenca) > 0.01 ? 'text-rose-600' : 'text-neutral-500'
+                  }`}
+                >
+                  <span>Soma das parcelas: {formatCurrency(parcelasTotal)}</span>
+                  {Math.abs(parcelasDiferenca) > 0.01 && (
+                    <span>
+                      {parcelasDiferenca > 0 ? 'Falta' : 'Excedeu em'}{' '}
+                      {formatCurrency(Math.abs(parcelasDiferenca))}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
           </div>

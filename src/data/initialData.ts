@@ -343,3 +343,10 @@ export function formatDateShort(dateString: string): string {
     return dateString;
   }
 }
+
+// Formata uma data pura (YYYY-MM-DD, sem horário) sem sofrer o deslocamento de fuso horário
+export function formatDateOnly(dateString: string): string {
+  const [year, month, day] = dateString.split('-');
+  if (!year || !month || !day) return dateString;
+  return `${day}/${month}/${year}`;
+}
