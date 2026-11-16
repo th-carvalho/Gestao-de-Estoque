@@ -49,6 +49,7 @@ export interface Sale {
   totalCost: number;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
+  installments: number;
   notes?: string;
 }
 

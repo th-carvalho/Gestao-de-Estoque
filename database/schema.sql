@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS vendas (
   custo_total DECIMAL(10,2) NOT NULL DEFAULT 0,
   forma_pagamento VARCHAR(30) NOT NULL,
   status_pagamento VARCHAR(20) NOT NULL DEFAULT 'pago',
+  parcelas INTEGER NOT NULL DEFAULT 1,
   notas TEXT,
   data_venda DATETIME NOT NULL
 );
@@ -68,6 +69,19 @@ SET @coluna_existe = (
 );
 SET @sql = IF(@coluna_existe = 0,
   'ALTER TABLE vendas ADD COLUMN status_pagamento VARCHAR(20) NOT NULL DEFAULT ''pago''',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Migração: adiciona parcelas em bancos criados antes dessa coluna existir
+SET @coluna_existe = (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = 'estoque_db' AND TABLE_NAME = 'vendas' AND COLUMN_NAME = 'parcelas'
+);
+SET @sql = IF(@coluna_existe = 0,
+  'ALTER TABLE vendas ADD COLUMN parcelas INTEGER NOT NULL DEFAULT 1',
   'SELECT 1'
 );
 PREPARE stmt FROM @sql;

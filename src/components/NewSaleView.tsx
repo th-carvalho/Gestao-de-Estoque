@@ -47,6 +47,7 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
+  const [installments, setInstallments] = useState(1);
   const [discount, setDiscount] = useState<string>('0');
   const [saleNotes, setSaleNotes] = useState('');
 
@@ -197,9 +198,11 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
       totalCost,
       paymentMethod,
       paymentStatus: paymentMethod === 'prazo' ? 'pendente' : 'pago',
+      installments: paymentMethod === 'cartao_credito' ? installments : 1,
       notes: saleNotes.trim() || undefined,
     });
 
+    setInstallments(1);
     clearCart();
   };
 
@@ -516,7 +519,10 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
                   <button
                     key={m.id}
                     type="button"
-                    onClick={() => setPaymentMethod(m.id as PaymentMethod)}
+                    onClick={() => {
+                      setPaymentMethod(m.id as PaymentMethod);
+                      if (m.id !== 'cartao_credito') setInstallments(1);
+                    }}
                     className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-medium transition-colors ${
                       isSelected
                         ? 'bg-neutral-900 text-white border-neutral-900'
@@ -529,6 +535,25 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
                 );
               })}
             </div>
+
+            {paymentMethod === 'cartao_credito' && (
+              <div className="pt-1">
+                <label className="text-xs font-medium text-neutral-600 block mb-1">
+                  Número de parcelas
+                </label>
+                <select
+                  value={installments}
+                  onChange={(e) => setInstallments(Number(e.target.value))}
+                  className="w-full text-xs sm:text-sm py-2 px-3 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-400"
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                    <option key={n} value={n}>
+                      {n}x {n === 1 ? 'à vista' : `de ${formatCurrency(finalTotal / n)}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Discount & Notes */}

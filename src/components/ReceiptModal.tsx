@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Printer, Copy, Check, X, FileText } from 'lucide-react';
+import { Printer, Copy, Check, X, Receipt } from 'lucide-react';
 import { Sale, StoreSettings } from '../types';
 import { formatCurrency, formatDate } from '../data/initialData';
 
@@ -9,6 +9,8 @@ interface ReceiptModalProps {
   settings: StoreSettings;
   onClose: () => void;
 }
+
+const LINE = '--------------------------------';
 
 export const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, settings, onClose }) => {
   const [copied, setCopied] = useState(false);
@@ -22,9 +24,11 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, settings, onCl
       case 'cartao_debito':
         return 'Cartão de Débito';
       case 'cartao_credito':
-        return 'Cartão de Crédito';
+        return sale.installments > 1
+          ? `Cartão de Crédito ${sale.installments}x`
+          : 'Cartão de Crédito à vista';
       case 'prazo':
-        return 'A Prazo';
+        return 'A Prazo (Fiado)';
       default:
         return 'Outro';
     }
@@ -49,8 +53,10 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, settings, onCl
       `Subtotal: ${formatCurrency(sale.subtotal)}`,
       sale.discount > 0 ? `Desconto: -${formatCurrency(sale.discount)}` : null,
       `*Total: ${formatCurrency(sale.total)}*`,
-      `Forma de Pagamento: ${getPaymentLabel(sale.paymentMethod)}`,
-      settings.pixKey ? `Chave Pix: ${settings.pixKey}` : null,
+      sale.paymentMethod === 'cartao_credito' && sale.installments > 1
+        ? `Pagamento: ${sale.installments}x de ${formatCurrency(sale.total / sale.installments)}`
+        : `Forma de Pagamento: ${getPaymentLabel(sale.paymentMethod)}`,
+      settings.pixKey && sale.paymentMethod === 'pix' ? `Chave Pix: ${settings.pixKey}` : null,
       `---------------------------------`,
       `Agradecemos pela preferência!`,
     ]
@@ -76,19 +82,17 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, settings, onCl
       transition={{ duration: 0.15 }}
     >
       <motion.div
-        className="bg-white w-full max-w-lg rounded-xl shadow-xl border border-neutral-200 overflow-hidden my-6"
+        className="bg-white w-full max-w-xs rounded-xl shadow-xl border border-neutral-200 overflow-hidden my-6"
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.96 }}
         transition={{ duration: 0.15 }}
       >
         {/* Modal Toolbar (hidden on print) */}
-        <div className="no-print flex items-center justify-between px-6 py-4 border-b border-neutral-200 bg-neutral-50">
+        <div className="no-print flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-neutral-50">
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-neutral-700" />
-            <h3 className="font-semibold text-neutral-800 text-base">
-              Nota / Comprovante de Venda #{sale.saleNumber}
-            </h3>
+            <Receipt className="w-4 h-4 text-neutral-700" />
+            <h3 className="font-semibold text-neutral-800 text-sm">Cupom #{sale.saleNumber}</h3>
           </div>
           <button
             id="close-receipt-btn"
@@ -96,145 +100,108 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, settings, onCl
             className="text-neutral-500 hover:text-neutral-800 p-1 rounded-md transition-colors"
             title="Fechar"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Action buttons (hidden on print) */}
-        <div className="no-print p-4 bg-neutral-100/70 border-b border-neutral-200 flex flex-wrap gap-2 justify-end">
-          <button
-            id="copy-whatsapp-text-btn"
-            onClick={handleCopyText}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors shadow-xs"
-          >
-            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-            {copied ? 'Copiado para o WhatsApp' : 'Copiar Texto para Enviar'}
-          </button>
+        <div className="no-print p-3 bg-neutral-100/70 border-b border-neutral-200 flex flex-col gap-2">
           <button
             id="print-receipt-btn"
             onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 transition-colors shadow-xs"
+            className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 transition-colors shadow-xs"
           >
             <Printer className="w-4 h-4" />
-            Imprimir / Salvar PDF
+            Imprimir Cupom
+          </button>
+          <button
+            id="copy-whatsapp-text-btn"
+            onClick={handleCopyText}
+            className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors shadow-xs"
+          >
+            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+            {copied ? 'Copiado para o WhatsApp' : 'Copiar Texto para WhatsApp'}
           </button>
         </div>
 
-        {/* Actual Printable Receipt */}
-        <div id="printable-receipt" className="p-6 md:p-8 bg-white text-neutral-900 font-sans text-sm">
-          {/* Header */}
-          <div className="text-center pb-5 border-b border-neutral-200">
-            <h2 className="text-xl font-bold tracking-tight text-neutral-900 uppercase">
-              {settings.storeName}
-            </h2>
-            <p className="text-xs text-neutral-600 mt-0.5">Gestão de Produtos Capilares</p>
-            {settings.phone && (
-              <p className="text-xs text-neutral-600">Telefone: {settings.phone}</p>
-            )}
-            {settings.address && (
-              <p className="text-xs text-neutral-500">{settings.address}</p>
-            )}
-            <div className="mt-3 inline-block bg-neutral-100 px-3 py-1 rounded text-xs font-semibold text-neutral-700 uppercase tracking-wider">
-              Comprovante de Venda Não-Fiscal
+        {/* Actual Printable Coupon */}
+        <div className="bg-neutral-200 p-3">
+          <div
+            id="printable-receipt"
+            className="bg-white mx-auto p-3 text-neutral-900 text-[12px] leading-snug"
+            style={{ width: '280px', fontFamily: "'Courier New', Courier, monospace" }}
+          >
+            {/* Header */}
+            <div className="text-center">
+              <div className="font-bold text-[14px] uppercase">{settings.storeName}</div>
+              {settings.phone && <div>Tel: {settings.phone}</div>}
+              {settings.address && <div>{settings.address}</div>}
             </div>
-          </div>
 
-          {/* Sale details */}
-          <div className="py-4 border-b border-neutral-200 grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <span className="text-neutral-500 block">Número do Registro:</span>
-              <span className="font-semibold text-neutral-900">#{sale.saleNumber}</span>
-            </div>
-            <div>
-              <span className="text-neutral-500 block">Data e Horário:</span>
-              <span className="font-semibold text-neutral-900">{formatDate(sale.date)}</span>
-            </div>
-            <div className="col-span-2 pt-1">
-              <span className="text-neutral-500 block">Cliente:</span>
-              <span className="font-semibold text-neutral-900 text-sm">{sale.clientName}</span>
-            </div>
-          </div>
+            <div className="my-1 whitespace-pre">{LINE}</div>
 
-          {/* Items Table */}
-          <div className="py-4 border-b border-neutral-200">
-            <div className="text-xs font-semibold uppercase text-neutral-500 mb-2">
-              Itens da Compra
-            </div>
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-neutral-100 text-neutral-500 text-left">
-                  <th className="pb-1 font-medium">Qtd</th>
-                  <th className="pb-1 font-medium">Descrição</th>
-                  <th className="pb-1 font-medium text-right">Unit.</th>
-                  <th className="pb-1 font-medium text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-100">
-                {sale.items.map((item, index) => (
-                  <tr key={index} className="py-1">
-                    <td className="py-1.5 align-top font-medium w-8">{item.quantity}x</td>
-                    <td className="py-1.5 align-top">
-                      <div className="font-medium text-neutral-800">{item.productName}</div>
-                      {item.brand && (
-                        <div className="text-[11px] text-neutral-400">{item.brand}</div>
-                      )}
-                    </td>
-                    <td className="py-1.5 align-top text-right text-neutral-600 w-20">
-                      {formatCurrency(item.unitPrice)}
-                    </td>
-                    <td className="py-1.5 align-top text-right font-medium text-neutral-900 w-20">
-                      {formatCurrency(item.subtotal)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            <div className="text-center font-bold">CUPOM NAO FISCAL</div>
+            <div className="text-center">Venda #{sale.saleNumber}</div>
 
-          {/* Totals & Payment */}
-          <div className="py-4 border-b border-neutral-200 space-y-1.5 text-xs">
-            <div className="flex justify-between text-neutral-600">
+            <div className="my-1 whitespace-pre">{LINE}</div>
+
+            <div>Data: {formatDate(sale.date)}</div>
+            <div>Cliente: {sale.clientName}</div>
+
+            <div className="my-1 whitespace-pre">{LINE}</div>
+
+            {sale.items.map((item, index) => (
+              <div key={index} className="mb-1">
+                <div>{item.productName}</div>
+                <div className="flex justify-between">
+                  <span>
+                    {item.quantity}x {formatCurrency(item.unitPrice)}
+                  </span>
+                  <span>{formatCurrency(item.subtotal)}</span>
+                </div>
+              </div>
+            ))}
+
+            <div className="my-1 whitespace-pre">{LINE}</div>
+
+            <div className="flex justify-between">
               <span>Subtotal</span>
               <span>{formatCurrency(sale.subtotal)}</span>
             </div>
             {sale.discount > 0 && (
-              <div className="flex justify-between text-emerald-700">
-                <span>Desconto aplicado</span>
+              <div className="flex justify-between">
+                <span>Desconto</span>
                 <span>-{formatCurrency(sale.discount)}</span>
               </div>
             )}
-            <div className="flex justify-between text-base font-bold text-neutral-900 pt-1 border-t border-neutral-200">
-              <span>Total Pago</span>
+            <div className="flex justify-between font-bold text-[14px] mt-1">
+              <span>TOTAL</span>
               <span>{formatCurrency(sale.total)}</span>
             </div>
-            <div className="flex justify-between text-xs text-neutral-600 pt-1">
-              <span>Forma de Pagamento:</span>
-              <span className="font-medium text-neutral-900">
-                {getPaymentLabel(sale.paymentMethod)}
-              </span>
-            </div>
-            {settings.pixKey && sale.paymentMethod === 'pix' && (
-              <div className="flex justify-between text-xs text-neutral-600">
-                <span>Chave Pix:</span>
-                <span className="font-mono text-neutral-800">{settings.pixKey}</span>
+
+            <div className="my-1 whitespace-pre">{LINE}</div>
+
+            <div>Pagamento: {getPaymentLabel(sale.paymentMethod)}</div>
+            {sale.paymentMethod === 'cartao_credito' && sale.installments > 1 && (
+              <div>
+                {sale.installments}x de {formatCurrency(sale.total / sale.installments)}
               </div>
             )}
-          </div>
+            {settings.pixKey && sale.paymentMethod === 'pix' && (
+              <div>Chave Pix: {settings.pixKey}</div>
+            )}
 
-          {/* Notes if any */}
-          {sale.notes && (
-            <div className="py-3 border-b border-neutral-200 text-xs">
-              <span className="text-neutral-500 block font-medium">Observações:</span>
-              <p className="text-neutral-700 mt-0.5">{sale.notes}</p>
-            </div>
-          )}
+            {sale.notes && (
+              <>
+                <div className="my-1 whitespace-pre">{LINE}</div>
+                <div>Obs: {sale.notes}</div>
+              </>
+            )}
 
-          {/* Footer note */}
-          <div className="pt-6 text-center text-xs text-neutral-500 space-y-1">
-            <p className="font-medium text-neutral-700">Obrigado pela preferência e confiança!</p>
-            <p className="text-[11px] text-neutral-400">
-              Em caso de dúvidas sobre o modo de uso dos produtos, entre em contato.
-            </p>
+            <div className="my-1 whitespace-pre">{LINE}</div>
+
+            <div className="text-center mt-2">Obrigado pela preferencia!</div>
+            <div className="text-center">volte sempre</div>
           </div>
         </div>
       </motion.div>

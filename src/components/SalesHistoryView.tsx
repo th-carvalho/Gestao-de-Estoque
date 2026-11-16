@@ -233,6 +233,9 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
                           )}`}
                         >
                           {getPaymentName(sale.paymentMethod)}
+                          {sale.paymentMethod === 'cartao_credito' && sale.installments > 1
+                            ? ` ${sale.installments}x`
+                            : ''}
                         </span>
                       </td>
 

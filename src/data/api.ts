@@ -68,6 +68,7 @@ function rowToSale(r: Record<string, unknown>): Sale {
     totalCost: Number(r.custo_total),
     paymentMethod: r.forma_pagamento as Sale['paymentMethod'],
     paymentStatus: (r.status_pagamento ?? 'pago') as Sale['paymentStatus'],
+    installments: Number(r.parcelas ?? 1),
     notes: (r.notas ?? '') as string,
     items: rawItems.map((i) => ({
       productId: i.produto_id as string,
@@ -179,6 +180,7 @@ export async function apiAddSale(s: Sale): Promise<void> {
       total: s.total,
       custo_total: s.totalCost,
       forma_pagamento: s.paymentMethod,
+      parcelas: s.installments,
       notas: s.notes ?? '',
       data_venda: s.date,
       items: s.items.map((i) => ({

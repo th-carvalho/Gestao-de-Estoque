@@ -174,6 +174,7 @@ export const INITIAL_SALES: Sale[] = [
     totalCost: 113.0,
     paymentMethod: 'pix',
     paymentStatus: 'pago',
+    installments: 1,
     notes: 'Desconto à vista no Pix',
   },
   {
@@ -199,7 +200,8 @@ export const INITIAL_SALES: Sale[] = [
     totalCost: 90.0,
     paymentMethod: 'cartao_credito',
     paymentStatus: 'pago',
-    notes: 'Parcelado em 2x no balcão',
+    installments: 2,
+    notes: '',
   },
   {
     id: 'sale-1003',
@@ -223,6 +225,7 @@ export const INITIAL_SALES: Sale[] = [
     totalCost: 38.0,
     paymentMethod: 'dinheiro',
     paymentStatus: 'pago',
+    installments: 1,
     notes: '',
   },
 ];
