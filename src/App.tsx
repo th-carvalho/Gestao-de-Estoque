@@ -227,6 +227,7 @@ export default function App() {
             {currentTab === 'vendas' && (
               <SalesHistoryView
                 sales={sales}
+                products={products}
                 onViewReceipt={(sale) => setActiveReceiptSale(sale)}
                 onCancelSale={handleCancelSale}
                 onMarkAsPaid={handleMarkAsPaid}

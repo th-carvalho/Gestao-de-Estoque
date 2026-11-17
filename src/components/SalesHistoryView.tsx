@@ -11,11 +11,12 @@ import {
   ChevronUp,
   Circle,
 } from 'lucide-react';
-import { Sale } from '../types';
+import { Sale, Product } from '../types';
 import { formatCurrency, formatDate, formatDateOnly } from '../data/initialData';
 
 interface SalesHistoryViewProps {
   sales: Sale[];
+  products: Product[];
   onViewReceipt: (sale: Sale) => void;
   onCancelSale: (saleId: string) => void;
   onMarkAsPaid: (saleId: string) => void;
@@ -24,6 +25,7 @@ interface SalesHistoryViewProps {
 
 export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
   sales,
+  products,
   onViewReceipt,
   onCancelSale,
   onMarkAsPaid,
@@ -32,7 +34,22 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | '7days' | 'month'>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [expandedSaleId, setExpandedSaleId] = useState<string | null>(null);
+
+  const categoryByProductId = useMemo(() => {
+    const map = new Map<string, string>();
+    products.forEach((p) => map.set(p.id, p.category));
+    return map;
+  }, [products]);
+
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p) => {
+      if (p.category) set.add(p.category);
+    });
+    return Array.from(set);
+  }, [products]);
 
   const filteredSales = useMemo(() => {
     const now = new Date();
@@ -56,6 +73,13 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
 
         if (paymentFilter !== 'all' && sale.paymentMethod !== paymentFilter) return false;
 
+        if (
+          categoryFilter !== 'all' &&
+          !sale.items.some((item) => categoryByProductId.get(item.productId) === categoryFilter)
+        ) {
+          return false;
+        }
+
         const saleDate = new Date(sale.date);
         if (dateFilter === 'today') {
           return sale.date.startsWith(todayStr);
@@ -69,7 +93,7 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
         return true;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [sales, searchTerm, dateFilter, paymentFilter]);
+  }, [sales, searchTerm, dateFilter, paymentFilter, categoryFilter, categoryByProductId]);
 
   const totalPeriodRevenue = filteredSales.reduce((acc, s) => acc + s.total, 0);
   const totalPendente = filteredSales
@@ -191,6 +215,22 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
               <option value="cartao_debito">Cartão Débito</option>
               <option value="dinheiro">Dinheiro</option>
               <option value="prazo">A Prazo</option>
+            </select>
+          </div>
+
+          <div className="relative">
+            <Filter className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="pl-8 pr-8 py-2 text-xs sm:text-sm bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-400 appearance-none"
+            >
+              <option value="all">Todas as categorias</option>
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
           </div>
         </div>
