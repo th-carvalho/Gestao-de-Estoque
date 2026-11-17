@@ -94,6 +94,19 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sales, products }) => 
     return products.filter((p) => p.stock <= p.minStock);
   }, [products]);
 
+  // Current stock snapshot (quantity & value), independent of the selected period
+  const stockSummary = useMemo(() => {
+    return products.reduce(
+      (acc, p) => {
+        acc.totalUnits += p.stock;
+        acc.costValue += p.stock * p.costPrice;
+        acc.saleValue += p.stock * p.sellingPrice;
+        return acc;
+      },
+      { totalUnits: 0, costValue: 0, saleValue: 0 }
+    );
+  }, [products]);
+
   // Payment methods breakdown
   const paymentBreakdown = useMemo(() => {
     const summary: Record<string, { count: number; total: number }> = {
@@ -285,6 +298,40 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sales, products }) => 
             {formatCurrency(averageTicket)}
           </span>
           <span className="text-[11px] text-neutral-500">Média por cliente no período</span>
+        </div>
+      </div>
+
+      {/* Current Stock Snapshot */}
+      <div className="bg-white p-5 rounded-xl border border-neutral-200 space-y-3">
+        <div className="flex items-center gap-2 pb-2 border-b border-neutral-200">
+          <Package className="w-4 h-4 text-neutral-700" />
+          <h3 className="font-bold text-neutral-900 text-sm">Estoque Atual</h3>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+          <div className="p-3 rounded-lg bg-neutral-50 border border-neutral-100">
+            <span className="text-xs text-neutral-500 font-medium block">Unidades em Estoque</span>
+            <span className="text-xl font-bold text-neutral-900 mt-0.5 block">
+              {stockSummary.totalUnits} un.
+            </span>
+            <span className="text-[11px] text-neutral-400">{products.length} produto(s) cadastrado(s)</span>
+          </div>
+
+          <div className="p-3 rounded-lg bg-neutral-50 border border-neutral-100">
+            <span className="text-xs text-neutral-500 font-medium block">Valor em Estoque (Custo)</span>
+            <span className="text-xl font-bold text-neutral-900 mt-0.5 block">
+              {formatCurrency(stockSummary.costValue)}
+            </span>
+            <span className="text-[11px] text-neutral-400">Investido em mercadoria</span>
+          </div>
+
+          <div className="p-3 rounded-lg bg-neutral-50 border border-neutral-100">
+            <span className="text-xs text-neutral-500 font-medium block">Valor em Estoque (Venda)</span>
+            <span className="text-xl font-bold text-emerald-700 mt-0.5 block">
+              {formatCurrency(stockSummary.saleValue)}
+            </span>
+            <span className="text-[11px] text-neutral-400">Potencial de faturamento</span>
+          </div>
         </div>
       </div>
 
