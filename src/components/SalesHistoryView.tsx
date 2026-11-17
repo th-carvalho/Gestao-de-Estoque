@@ -100,6 +100,22 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
     .filter((s) => s.paymentStatus === 'pendente')
     .reduce((acc, s) => acc + s.total, 0);
 
+  const getDueStatus = (dueDate: string, paid: boolean) => {
+    if (paid) return null;
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+      now.getDate()
+    ).padStart(2, '0')}`;
+
+    if (dueDate < todayStr) {
+      return { label: 'Vencida', className: 'text-rose-700 bg-rose-50 border-rose-200' };
+    }
+    if (dueDate === todayStr) {
+      return { label: 'Vence hoje', className: 'text-orange-700 bg-orange-50 border-orange-200' };
+    }
+    return null;
+  };
+
   const getPaymentBadge = (method: string) => {
     switch (method) {
       case 'pix':
@@ -390,10 +406,14 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
                               Datas de pagamento combinadas
                             </div>
                             <div className="space-y-1.5 max-w-md">
-                              {sale.prazoSchedule!.map((p) => (
+                              {sale.prazoSchedule!.map((p) => {
+                                const dueStatus = getDueStatus(p.dueDate, p.paid);
+                                return (
                                 <div
                                   key={p.number}
-                                  className="flex items-center justify-between bg-white border border-neutral-200 rounded-lg px-3 py-2 text-xs"
+                                  className={`flex items-center justify-between bg-white border rounded-lg px-3 py-2 text-xs ${
+                                    dueStatus ? dueStatus.className.split(' ').find((c) => c.startsWith('border-')) : 'border-neutral-200'
+                                  }`}
                                 >
                                   <div className="flex items-center gap-2">
                                     <Calendar className="w-3.5 h-3.5 text-neutral-400" />
@@ -403,6 +423,13 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
                                     <span className="text-neutral-500">
                                       {formatCurrency(p.amount)}
                                     </span>
+                                    {dueStatus && (
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded-md text-[10px] font-semibold border ${dueStatus.className}`}
+                                      >
+                                        {dueStatus.label}
+                                      </span>
+                                    )}
                                   </div>
                                   <button
                                     onClick={() =>
@@ -422,7 +449,8 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
                                     {p.paid ? 'Recebido' : 'Marcar como recebido'}
                                   </button>
                                 </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </td>
                         </tr>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { LoginView } from './components/LoginView';
 import { Navbar } from './components/Navbar';
@@ -174,6 +174,22 @@ export default function App() {
 
   const lowStockCount = products.filter((p) => p.stock <= p.minStock).length;
 
+  // Cobranças de fiado vencidas ou vencendo hoje (apenas leitura, não altera nenhum dado)
+  const dueChargesCount = useMemo(() => {
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+      now.getDate()
+    ).padStart(2, '0')}`;
+
+    let count = 0;
+    sales.forEach((s) => {
+      s.prazoSchedule?.forEach((p) => {
+        if (!p.paid && p.dueDate <= todayStr) count += 1;
+      });
+    });
+    return count;
+  }, [sales]);
+
   if (!logado) {
     return <LoginView onLogin={() => setLogado(true)} />;
   }
@@ -184,6 +200,7 @@ export default function App() {
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
         lowStockCount={lowStockCount}
+        dueChargesCount={dueChargesCount}
         settings={settings}
       />
 

@@ -6,6 +6,7 @@ import {
   FileText,
   BarChart3,
   AlertTriangle,
+  Clock,
 } from 'lucide-react';
 import { TabType, StoreSettings } from '../types';
 
@@ -13,6 +14,7 @@ interface NavbarProps {
   currentTab: TabType;
   onSelectTab: (tab: TabType) => void;
   lowStockCount: number;
+  dueChargesCount?: number;
   settings: StoreSettings;
 }
 
@@ -20,6 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentTab,
   onSelectTab,
   lowStockCount,
+  dueChargesCount = 0,
   settings,
 }) => {
   const tabs: { id: TabType; label: string; icon: React.FC<{ className?: string }> }[] = [
@@ -51,6 +54,18 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Quick Info & Config */}
           <div className="flex items-center gap-2">
+            {dueChargesCount > 0 && (
+              <button
+                id="header-due-charges-btn"
+                onClick={() => onSelectTab('vendas')}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-orange-800 bg-orange-50 border border-orange-200 rounded-full hover:bg-orange-100 transition-colors"
+                title={`${dueChargesCount} cobrança(s) de fiado vencida(s) ou vencendo hoje`}
+              >
+                <Clock className="w-3.5 h-3.5 text-orange-600" />
+                <span>{dueChargesCount} a cobrar</span>
+              </button>
+            )}
+
             {lowStockCount > 0 && (
               <button
                 id="header-low-stock-btn"
@@ -91,6 +106,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                     }`}
                   >
                     {lowStockCount}
+                  </span>
+                )}
+                {tab.id === 'vendas' && dueChargesCount > 0 && (
+                  <span
+                    className={`ml-1 text-[11px] px-1.5 py-0.2 rounded-full font-bold ${
+                      isActive ? 'bg-orange-500 text-white' : 'bg-orange-100 text-orange-800'
+                    }`}
+                  >
+                    {dueChargesCount}
                   </span>
                 )}
               </button>
