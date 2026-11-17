@@ -11,7 +11,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { Sale, Product } from '../types';
-import { formatCurrency, formatDateShort } from '../data/initialData';
+import { formatCurrency, formatDateShort, formatDateOnly } from '../data/initialData';
 
 interface ReportsViewProps {
   sales: Sale[];
@@ -19,7 +19,9 @@ interface ReportsViewProps {
 }
 
 export const ReportsView: React.FC<ReportsViewProps> = ({ sales, products }) => {
-  const [period, setPeriod] = useState<'today' | '7days' | 'month' | 'all'>('month');
+  const [period, setPeriod] = useState<'today' | '7days' | 'month' | 'all' | 'custom'>('month');
+  const [customStart, setCustomStart] = useState<string>('');
+  const [customEnd, setCustomEnd] = useState<string>('');
 
   const filteredSales = useMemo(() => {
     const now = new Date();
@@ -41,9 +43,15 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sales, products }) => 
       if (period === 'month') {
         return saleDate >= firstDayOfMonth;
       }
+      if (period === 'custom') {
+        if (!customStart || !customEnd) return false;
+        const start = new Date(`${customStart}T00:00:00`);
+        const end = new Date(`${customEnd}T23:59:59.999`);
+        return saleDate >= start && saleDate <= end;
+      }
       return true;
     });
-  }, [sales, period]);
+  }, [sales, period, customStart, customEnd]);
 
   // Aggregates
   const totalRevenue = filteredSales.reduce((acc, s) => acc + s.total, 0);
@@ -157,6 +165,11 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sales, products }) => 
         return 'Este Mês';
       case 'all':
         return 'Todo o Histórico';
+      case 'custom':
+        if (customStart && customEnd) {
+          return `${formatDateOnly(customStart)} a ${formatDateOnly(customEnd)}`;
+        }
+        return 'Período Personalizado';
     }
   };
 
@@ -180,11 +193,19 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sales, products }) => 
               { id: '7days', label: '7 Dias' },
               { id: 'month', label: 'Este Mês' },
               { id: 'all', label: 'Tudo' },
+              { id: 'custom', label: 'Personalizado' },
             ].map((p) => (
               <button
                 key={p.id}
-                onClick={() => setPeriod(p.id as any)}
-                className={`px-3 py-1.5 rounded-md transition-colors ${
+                onClick={() => {
+                  setPeriod(p.id as any);
+                  if (p.id === 'custom' && !customStart && !customEnd) {
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    setCustomStart(todayStr);
+                    setCustomEnd(todayStr);
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${
                   period === p.id
                     ? 'bg-neutral-900 text-white shadow-xs'
                     : 'text-neutral-600 hover:text-neutral-900'
@@ -194,6 +215,24 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ sales, products }) => 
               </button>
             ))}
           </div>
+
+          {period === 'custom' && (
+            <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg border border-neutral-200">
+              <input
+                type="date"
+                value={customStart}
+                onChange={(e) => setCustomStart(e.target.value)}
+                className="px-2 py-1 text-xs bg-neutral-50 border border-neutral-200 rounded-md focus:outline-hidden focus:border-neutral-400"
+              />
+              <span className="text-xs text-neutral-400">até</span>
+              <input
+                type="date"
+                value={customEnd}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                className="px-2 py-1 text-xs bg-neutral-50 border border-neutral-200 rounded-md focus:outline-hidden focus:border-neutral-400"
+              />
+            </div>
+          )}
 
           <button
             id="export-csv-btn"
