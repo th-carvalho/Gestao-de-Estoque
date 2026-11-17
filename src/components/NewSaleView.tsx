@@ -53,6 +53,7 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
     { numero: number; valor: string; vencimento: string }[]
   >([]);
   const [discount, setDiscount] = useState<string>('0');
+  const [discountMode, setDiscountMode] = useState<'percent' | 'reais'>('percent');
   const [saleNotes, setSaleNotes] = useState('');
 
   // Quick add client modal
@@ -169,13 +170,18 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
   const clearCart = () => {
     setCart([]);
     setDiscount('0');
+    setDiscountMode('percent');
     setSaleNotes('');
   };
 
   // Calculations
   const subtotal = cart.reduce((acc, item) => acc + item.subtotal, 0);
   const totalCost = cart.reduce((acc, item) => acc + item.costPrice * item.quantity, 0);
-  const discountVal = Math.min(subtotal, Math.max(0, parseFloat(discount) || 0));
+  const rawDiscount = Math.max(0, parseFloat(discount) || 0);
+  const discountVal =
+    discountMode === 'percent'
+      ? Math.min(subtotal, subtotal * (Math.min(100, rawDiscount) / 100))
+      : Math.min(subtotal, rawDiscount);
   const finalTotal = Math.max(0, subtotal - discountVal);
   const estimatedProfit = finalTotal - totalCost;
 
@@ -719,14 +725,44 @@ export const NewSaleView: React.FC<NewSaleViewProps> = ({
           {/* Discount & Notes */}
           <div className="space-y-2 pt-1">
             <div>
-              <label className="text-xs font-medium text-neutral-600 block mb-1">
-                Desconto (R$)
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-neutral-600">
+                  Desconto ({discountMode === 'percent' ? '%' : 'R$'})
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDiscountMode((prev) => (prev === 'percent' ? 'reais' : 'percent'));
+                    setDiscount('0');
+                  }}
+                  className="flex items-center gap-1.5 text-[11px] font-medium text-neutral-500"
+                  title="Alternar entre desconto em porcentagem ou em reais"
+                >
+                  <span className={discountMode === 'percent' ? 'text-neutral-900 font-semibold' : ''}>
+                    %
+                  </span>
+                  <span
+                    className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors ${
+                      discountMode === 'reais' ? 'bg-neutral-900' : 'bg-neutral-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                        discountMode === 'reais' ? 'translate-x-4' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </span>
+                  <span className={discountMode === 'reais' ? 'text-neutral-900 font-semibold' : ''}>
+                    R$
+                  </span>
+                </button>
+              </div>
               <input
                 id="sale-discount-input"
                 type="number"
-                step="0.50"
+                step={discountMode === 'percent' ? '1' : '0.50'}
                 min="0"
+                max={discountMode === 'percent' ? 100 : undefined}
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
                 className="w-full px-2.5 py-1.5 text-sm bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-400"
